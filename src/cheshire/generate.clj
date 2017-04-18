@@ -102,6 +102,15 @@
          (generate ~jg item# ~date-format ~e ~key-fn))
        (.writeEndArray ~jg))))
 
+(definline generate-delayed-array [^JsonGenerator jg obj ^String date-format
+                                   ^Exception e key-fn]
+  (let [jg (tag jg)]
+    `(do
+       (.writeStartArray ~jg)
+       (doseq [item# (deref ~obj)]
+         (generate ~jg item# ~date-format ~e ~key-fn))
+       (.writeEndArray ~jg))))
+
 (defmacro i?
   "Just to shorten 'instance?' and for debugging."
   [k obj]
@@ -133,6 +142,7 @@
      clojure.lang.Associative
      (generate-map jg obj date-format ex key-fn))
 
+   (i? clojure.lang.Delay obj) (generate-delayed-array jg obj date-format ex key-fn)
    (i? Number obj) (number-dispatch ^JsonGenerator jg obj ex)
    (i? Boolean obj) (.writeBoolean ^JsonGenerator jg ^Boolean obj)
    (i? String obj) (write-string ^JsonGenerator jg ^String obj)
